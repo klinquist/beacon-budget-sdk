@@ -146,6 +146,7 @@ const client = new BeaconBudget({
 });
 
 const ONE_DAY_AGO = Math.floor(Date.now() / 1000) - 86400;
+const MAX_TRANSACTION_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 async function monitorTransactions(timeSince) {
   // Get transactions from the last hour
@@ -153,6 +154,12 @@ async function monitorTransactions(timeSince) {
 
   //Look for rent payment transactions
   for (const transaction of transactions) {
+    const postedAt = new Date(transaction.posted_date).getTime();
+    if (postedAt < Date.now() - MAX_TRANSACTION_AGE_MS) {
+      log(`Skipping old transaction "${transaction.data.raw_name}"`);
+      continue;
+    }
+
     log(`Evaluating transaction "${transaction.data.raw_name}"`);
     expenseMappings.forEach(async (expenseMapping) => {
       if (
